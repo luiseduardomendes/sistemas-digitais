@@ -28,7 +28,6 @@ ARCHITECTURE behavior OF tb_ramses_po IS
          cg_b : IN  std_logic;
          cg_v : IN  std_logic;
          cg_read : IN  std_logic;
-         cg_write : IN  std_logic;
          n_out : OUT  std_logic;
          z_out : OUT  std_logic;
          c_out : OUT  std_logic;
@@ -94,7 +93,6 @@ BEGIN
           cg_b => cg_b,
           cg_v => cg_v,
           cg_read => cg_read,
-          cg_write => cg_write,
           n_out => n_out,
           z_out => z_out,
           c_out => c_out,

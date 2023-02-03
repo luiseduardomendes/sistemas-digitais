@@ -2,7 +2,7 @@ library IEEE;
 use IEEE.STD_LOGIC_1164.ALL;
 use IEEE.NUMERIC_STD.ALL;
 
-entity ramses_po is
+entity ahmes_po is
     Port ( 
 		ac_out: out  STD_LOGIC_VECTOR (7 downto 0);
 		pc_out: out  STD_LOGIC_VECTOR (7 downto 0);
@@ -24,7 +24,6 @@ entity ramses_po is
 		cg_b : in  STD_LOGIC;
 		cg_v : in  STD_LOGIC;
 		cg_read : in STD_LOGIC;
-		cg_write : in STD_LOGIC;
 
 		n_out : out  STD_LOGIC;
 		z_out : out  STD_LOGIC;
@@ -35,9 +34,9 @@ entity ramses_po is
 		ck : in STD_LOGIC;
 		rst : in STD_LOGIC
 	);
-end ramses_po;
+end ahmes_po;
 
-architecture Behavioral of ramses_po is
+architecture Behavioral of ahmes_po is
  -- registers
 signal PC  : STD_LOGIC_VECTOR(7 DOWNTO 0);
 signal RA  : STD_LOGIC_VECTOR(7 DOWNTO 0);
@@ -63,6 +62,13 @@ signal ula_out_n : STD_LOGIC;
 signal ula_out_z : STD_LOGIC;
 
 begin
+	
+	ula_in_x <= RA;
+	ula_in_y <= RDM;
+
+	mem_end <= RMA;
+	mem_in <= rdm;
+
 	process(ck, rst, RI, ula_in_x, ula_in_y, ula_out)
 		variable ula_temp : std_logic_vector(8 DOWNTO 0);
 	begin
@@ -128,33 +134,50 @@ begin
 		c_out <= fl_c;
 		v_out <= fl_v;
 		b_out <= fl_b;
+	end process;
 
+	
+	accumulator : process(rst, ck)
+  	begin
 		if rst = '1' then
 			RA <= (others => '0');
-			RI <= (others => '0');
-			RDM <= (others => '0');
-			RMA <= (others => '0');
-			
 		elsif ck'event and ck = '1' then
-			ula_in_x <= RA;
-			ula_in_y <= rdm;
-		
 			if cg_ra = '1' then
 				RA <= ula_out;
 			end if;
-			
+		end if;
+	end process;
+	
+	inst_register : process(rst, ck)
+  	begin	 
+		if rst = '1' then
+			RI <= (others => '0');
+		elsif ck'event and ck = '1' then
 			if cg_ri = '1' then
 				RI <= RDM;
 			end if;
-			
-			if cg_pc = '1' then
-				PC <= RDM;
+		end if;
+	end process;
+
+	mem_data_reg : process(rst, ck)
+  	begin	 
+		if rst = '1' then
+			RDM <= (others => '0');
+		elsif ck'event and ck = '1' then
+			if cg_rdm = '1' then
+				RDM <= RA;
 			end if;
-			
-			if inc_pc = '1' then
-				PC <= std_logic_vector(unsigned(PC) + 1);
+			if cg_read = '1' then 
+				rdm <= mem_out;
 			end if;
-			
+		end if;
+	end process;
+
+	mem_addr_reg : process(rst, ck)
+  	begin	 
+		if rst = '1' then
+			RMA <= (others => '0');
+		elsif ck'event and ck = '1' then
 			if cg_rem = '1' then
 				if sel_rem = '1' then
 					RMA <= PC;
@@ -162,39 +185,69 @@ begin
 					RMA <= RDM;
 				end if;
 			end if;
+		end if;
+	end process;
 
-			if cg_rdm = '1' then
-				rdm <= RA;
-      		end if;
+	prog_counter : process(rst, ck)
+  	begin	 
+		if rst = '1' then
+			PC <= (others => '0');
+		elsif ck'event and ck = '1' then
+			if cg_pc = '1' then
+				PC <= RDM;
+			end if;
+			if inc_pc = '1' then
+				PC <= std_logic_vector(unsigned(PC) + 1);
+			end if;
+		end if;
+	end process;
 			
+	flag_neg_zero : process(rst, ck)
+	begin
+		if rst = '1' then
+			fl_z <= '0';
+			fl_n <= '0';
+		elsif ck'event and ck = '1' then
 			if cg_nz = '1' then
 				fl_n <= ula_out_n;
 				fl_z <= ula_out_z;
 			end if;
-			
+		end if;
+	end process;
+
+	flag_carry : process(rst, ck)
+	begin
+		if rst = '1' then
+			fl_c <= '0';
+		elsif ck'event and ck = '1' then
 			if cg_c = '1' then
 				fl_c <= ula_out_c;
 			end if;
-			
+		end if;
+	end process;
+
+	flag_borrow : process(rst, ck)
+	begin
+		if rst = '1' then
+			fl_b <= '0';
+		elsif ck'event and ck = '1' then
 			if cg_b = '1' then
 				fl_b <= ula_out_b;
 			end if;
-			
+		end if;
+	end process;
+	
+	flag_overflow : process(rst, ck)
+	begin
+		if rst = '1' then
+			fl_v <= '0';
+		elsif ck'event and ck = '1' then
 			if cg_v = '1' then
 				fl_v <= ula_out_v;
 			end if;
-			
-			if cg_read = '1' then 
-				rdm <= mem_out;
-				mem_end <= RMA;
-			end if;
-			
-			if cg_write = '1' then 
-				mem_in <= rdm;
-				mem_end <= RMA;
-			end if;
 		end if;
 	end process;
+
 	ac_out <= ra;
 	pc_out <= pc;
 
