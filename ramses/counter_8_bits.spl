@@ -1,8 +1,0 @@
-[Inputs]
-R
-ck
-=D[7:0]=
-=sel[1:0]=
-[Outputs]
-=Q[7:0]=
-[BiDir]

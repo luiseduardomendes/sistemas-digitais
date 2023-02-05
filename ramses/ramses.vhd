@@ -7,10 +7,6 @@ entity ahmes_po is
 		ac_out: out  STD_LOGIC_VECTOR (7 downto 0);
 		pc_out: out  STD_LOGIC_VECTOR (7 downto 0);
 		
-		mem_out : in  STD_LOGIC_VECTOR (7 downto 0);
-		mem_in : out  STD_LOGIC_VECTOR (7 downto 0);
-		mem_end : out STD_LOGIC_VECTOR (7 downto 0);
-
 		sel_rem : in  STD_LOGIC;
 		inc_pc : in  STD_LOGIC;
 
@@ -24,12 +20,13 @@ entity ahmes_po is
 		cg_b : in  STD_LOGIC;
 		cg_v : in  STD_LOGIC;
 		cg_read : in STD_LOGIC;
+		cg_write: in STD_LOGIC;
 
-		n_out : out  STD_LOGIC;
-		z_out : out  STD_LOGIC;
-		c_out : out  STD_LOGIC;
-		b_out : out  STD_LOGIC;
-		v_out : out  STD_LOGIC;
+		fl_n_out : out std_logic;
+		fl_z_out : out std_logic;
+		fl_c_out : out std_logic;
+		fl_b_out : out std_logic;
+		fl_v_out : out std_logic;
 
 		ck : in STD_LOGIC;
 		rst : in STD_LOGIC
@@ -43,12 +40,12 @@ signal RA  : STD_LOGIC_VECTOR(7 DOWNTO 0);
 signal RI  : STD_LOGIC_VECTOR(7 DOWNTO 0);
 signal RDM : STD_LOGIC_VECTOR(7 DOWNTO 0);
 signal RMA : STD_LOGIC_VECTOR(7 DOWNTO 0);
- -- flag registers
-signal fl_n :  STD_LOGIC;
-signal fl_z :  STD_LOGIC;
-signal fl_c :  STD_LOGIC;
-signal fl_b :  STD_LOGIC;
-signal fl_v :  STD_LOGIC;
+signal fl_z : std_logic;
+signal fl_n : std_logic;
+signal fl_c : std_logic;
+signal fl_b : std_logic;
+signal fl_v : std_logic;
+
 
  -- ula wires
 signal ula_out : STD_LOGIC_VECTOR(7 DOWNTO 0);
@@ -65,6 +62,21 @@ signal ula_out_z : STD_LOGIC;
 signal rdm_in : std_logic_vector(7 downto 0);
 signal rma_in : std_logic_vector(7 downto 0);
 signal sel_pc : std_logic_vector(1 downto 0); 
+
+signal mem_out : STD_LOGIC_VECTOR (7 downto 0);
+signal mem_in :  STD_LOGIC_VECTOR (7 downto 0);
+signal mem_end : STD_LOGIC_VECTOR (7 downto 0);
+signal mem_sel : STD_LOGIC_VECTOR (0 downto 0);
+
+COMPONENT mem
+  PORT (
+    clka : IN STD_LOGIC;
+    wea : IN STD_LOGIC_VECTOR(0 DOWNTO 0);
+    addra : IN STD_LOGIC_VECTOR(7 DOWNTO 0);
+    dina : IN STD_LOGIC_VECTOR(7 DOWNTO 0);
+    douta : OUT STD_LOGIC_VECTOR(7 DOWNTO 0)
+  );
+END COMPONENT;
 
 COMPONENT counter_8_bits
 PORT(
@@ -93,86 +105,53 @@ PORT(
 	Q : OUT std_logic
 	);
 END COMPONENT;
+COMPONENT ULA_AHMES
+PORT(
+	ula_in_x : in STD_LOGIC_VECTOR(7 downto 0);
+	ula_in_y : in STD_LOGIC_VECTOR(7 downto 0);
+	ula_in_c : in STD_LOGIC;
+	ula_inst : in STD_LOGIC_VECTOR(7 downto 0);
 
-	
-
+	ula_out : out STD_LOGIC_VECTOR(7 downto 0); 
+	ula_out_c : out  STD_LOGIC;
+	ula_out_b : out  STD_LOGIC;
+	ula_out_v : out  STD_LOGIC;
+	ula_out_n : out  STD_LOGIC;
+	ula_out_z : out  STD_LOGIC
+	);
+END COMPONENT;
 	
 
 begin
-	
+	mem_sel(0) <= cg_write;
+	ram : mem PORT MAP (
+		clka => ck,
+		wea => mem_sel,
+		addra => mem_end,
+		dina => mem_in,
+		douta => mem_out
+	);
+	ULA : ULA_AHMES port MAP(
+		ula_in_x => ula_in_x,
+		ula_in_y => ula_in_y,
+		ula_in_c => fl_c, 
+		ula_inst => RI, 
+
+		ula_out   => ula_out,
+		ula_out_c => ula_out_c,
+		ula_out_b => ula_out_b,
+		ula_out_v => ula_out_v,
+		ula_out_n => ula_out_n,
+		ula_out_z => ula_out_z
+	);
+
 	ula_in_x <= RA;
 	ula_in_y <= RDM;
 
 	mem_end <= RMA;
 	mem_in <= rdm;
 
-	process(ck, rst, RI, ula_in_x, ula_in_y, ula_out)
-		variable ula_temp : std_logic_vector(8 DOWNTO 0);
-	begin
-		case RI(7 downto 4) is
-            when "0000" => -- NOP 
-                ula_out <= ula_in_x;
-            when "0001" => -- STA
-                ula_out <= ula_in_x;
-            when "0010" => -- LDA
-                ula_out <= ula_in_y;
-            when "0011" => -- ADD
-				ula_temp := std_logic_vector(unsigned('0' & ula_in_x) + unsigned('0' & ula_in_y)); 
-                ula_out <= ula_temp(7 downto 0);
-				ula_out_c <= ula_temp(8);
-
-				ula_out_v <= (ula_in_x(7) and ula_in_y(7) and not(ula_out(7))) or (not(ula_in_x(7)) and not(ula_in_y(7)) and ula_out(7));	
-
-            when "0100" => -- OR
-                ula_out <= ula_in_x or ula_in_y;
-            when "0101" => -- AND
-                ula_out <= ula_in_x and ula_in_y;
-            when "0110" => -- NOT
-                ula_out <= not ula_in_x;
-            when "0111" => -- SUB
-				ula_temp := std_logic_vector(unsigned('0' & ula_in_x) - unsigned('0' & ula_in_y)); 
-                ula_out <= ula_temp(7 downto 0);
-
-				ula_out_b <= not(ula_temp(8));
-				ula_out_v <= (ula_in_x(7) and not(ula_in_y(7)) and not(ula_out(7))) or (not(ula_in_x(7)) and ula_in_y(7) and ula_out(7));
-            when "1101" => -- NEG
-                ula_out <= std_logic_vector( - signed(ula_in_x));
-            when "1110" => -- SH and RO
-				case RI(1 downto 0) is
-					when "01" => -- SHL
-						ula_out_c <= ula_in_x(0);
-						ula_out <= std_logic_vector(shift_left(unsigned(ula_in_x), 1));
-					when "00" => -- SHR
-						ula_out_c <= ula_in_x(7);
-						ula_out <= std_logic_vector(shift_right(unsigned(ula_in_x), 1));
-					when "11" => -- ROL
-						ula_out_c <= ula_in_x(7);
-						if fl_c = '1' then
-							ula_out <= std_logic_vector(shift_left(unsigned(ula_in_x), 1) + 128);		
-						else
-							ula_out <= std_logic_vector(shift_left(unsigned(ula_in_x), 1));		
-						end if;
-					when others => -- ROR
-						ula_out_c <= ula_in_x(7);
-						if fl_c = '1' then
-							ula_out <= std_logic_vector(shift_right(unsigned(ula_in_x), 1) + 1);		
-						else
-							ula_out <= std_logic_vector(shift_right(unsigned(ula_in_x), 1));		
-						end if;
-				end case;
-            when others =>
-                ula_out <= ula_in_x;
-        end case;
-		ula_out_n <= ula_out(7);
-		ula_out_z <= not(ula_out(7) or ula_out(6) or ula_out(5) or ula_out(4) or ula_out(3) or ula_out(2) or ula_out(1) or ula_out(0));
-
-		n_out <= fl_n;
-		z_out <= fl_z;
-		c_out <= fl_c;
-		v_out <= fl_v;
-		b_out <= fl_b;
-	end process;
-
+	
 	accumulator : register_8_bits PORT MAP(
 		D => ula_out,
 		Q => RA,
@@ -197,6 +176,8 @@ begin
 		end if;
 		if cg_read = '1' then 
 			rdm_in <= mem_out;
+		else
+			rdm_in <= (others => '0');
 		end if;
 	end process;
 
@@ -286,6 +267,12 @@ begin
 
 	ac_out <= ra;
 	pc_out <= pc;
+
+	fl_z_out <= fl_z;
+	fl_n_out <= fl_n;
+	fl_c_out <= fl_c;
+	fl_b_out <= fl_b;
+	fl_v_out <= fl_v;
 
 end Behavioral;
 
