@@ -61,6 +61,43 @@ signal ula_out_v : STD_LOGIC;
 signal ula_out_n : STD_LOGIC;
 signal ula_out_z : STD_LOGIC;
 
+ -- other wires
+signal rdm_in : std_logic_vector(7 downto 0);
+signal rma_in : std_logic_vector(7 downto 0);
+signal sel_pc : std_logic_vector(1 downto 0); 
+
+COMPONENT counter_8_bits
+PORT(
+	D : IN std_logic_vector(7 downto 0);
+	R : IN std_logic;
+	sel : IN std_logic_vector(1 downto 0);
+	ck : IN std_logic;          
+	Q : OUT std_logic_vector(7 downto 0)
+	);
+END COMPONENT;
+COMPONENT register_8_bits
+PORT(
+	D : IN std_logic_vector(7 downto 0);
+	E : IN std_logic;
+	R : IN std_logic;
+	ck : IN std_logic;          
+	Q : OUT std_logic_vector(7 downto 0)
+	);
+END COMPONENT;
+COMPONENT ffd
+PORT(
+	D : IN std_logic;
+	E : IN std_logic;
+	R : IN std_logic;
+	ck : IN std_logic;          
+	Q : OUT std_logic
+	);
+END COMPONENT;
+
+	
+
+	
+
 begin
 	
 	ula_in_x <= RA;
@@ -136,117 +173,116 @@ begin
 		b_out <= fl_b;
 	end process;
 
+	accumulator : register_8_bits PORT MAP(
+		D => ula_out,
+		Q => RA,
+		E => cg_ra,
+		R => rst,
+		ck => ck
+	);
 	
-	accumulator : process(rst, ck)
+	instr_register : register_8_bits PORT MAP(
+		D => RDM,
+		Q => RI,
+		E => cg_ri,
+		R => rst,
+		ck => ck
+	);
+
+
+	sel_rdm_in : process(cg_read, cg_rdm)
+	begin
+		if cg_rdm = '1' then
+			rdm_in <= RA;
+		end if;
+		if cg_read = '1' then 
+			rdm_in <= mem_out;
+		end if;
+	end process;
+
+	mem_data_reg : register_8_bits PORT MAP(
+		D => rdm_in,
+		Q => rdm,
+		E => cg_rdm or cg_read,
+		R => rst,
+		ck => ck
+	);
+	
+	sel_rma_in : process(sel_rem)
   	begin
-		if rst = '1' then
-			RA <= (others => '0');
-		elsif ck'event and ck = '1' then
-			if cg_ra = '1' then
-				RA <= ula_out;
-			end if;
-		end if;
-	end process;
-	
-	inst_register : process(rst, ck)
-  	begin	 
-		if rst = '1' then
-			RI <= (others => '0');
-		elsif ck'event and ck = '1' then
-			if cg_ri = '1' then
-				RI <= RDM;
-			end if;
+		if sel_rem = '1' then
+			RMA_in <= PC;
+		else
+			RMA_in <= RDM;
 		end if;
 	end process;
 
-	mem_data_reg : process(rst, ck)
-  	begin	 
-		if rst = '1' then
-			RDM <= (others => '0');
-		elsif ck'event and ck = '1' then
-			if cg_rdm = '1' then
-				RDM <= RA;
-			end if;
-			if cg_read = '1' then 
-				rdm <= mem_out;
-			end if;
+	mem_addr_reg : register_8_bits PORT MAP(
+		D => rma_in,
+		Q => RMA,
+		E => cg_rem,
+		R => rst,
+		ck => ck
+	);
+
+	set_sel_pc : process(inc_pc, cg_pc)
+  	begin
+		if inc_pc = '1' then
+			sel_pc <= "01";
+		elsif cg_pc = '1' then
+			sel_pc <= "10";
+		else 
+			sel_pc <= "00";
 		end if;
 	end process;
 
-	mem_addr_reg : process(rst, ck)
-  	begin	 
-		if rst = '1' then
-			RMA <= (others => '0');
-		elsif ck'event and ck = '1' then
-			if cg_rem = '1' then
-				if sel_rem = '1' then
-					RMA <= PC;
-				else
-					RMA <= RDM;
-				end if;
-			end if;
-		end if;
-	end process;
-
-	prog_counter : process(rst, ck)
-  	begin	 
-		if rst = '1' then
-			PC <= (others => '0');
-		elsif ck'event and ck = '1' then
-			if cg_pc = '1' then
-				PC <= RDM;
-			end if;
-			if inc_pc = '1' then
-				PC <= std_logic_vector(unsigned(PC) + 1);
-			end if;
-		end if;
-	end process;
+	prog_counter: counter_8_bits PORT MAP(
+		D => RDM,
+		Q => PC,
+		R => Rst,
+		sel => sel_pc,
+		ck => ck
+	);
 			
-	flag_neg_zero : process(rst, ck)
-	begin
-		if rst = '1' then
-			fl_z <= '0';
-			fl_n <= '0';
-		elsif ck'event and ck = '1' then
-			if cg_nz = '1' then
-				fl_n <= ula_out_n;
-				fl_z <= ula_out_z;
-			end if;
-		end if;
-	end process;
+	flag_neg: ffd PORT MAP(
+		D => ula_out_n,
+		Q => fl_n,
+		E => cg_nz,
+		R => rst,
+		ck => ck
+	);
 
-	flag_carry : process(rst, ck)
-	begin
-		if rst = '1' then
-			fl_c <= '0';
-		elsif ck'event and ck = '1' then
-			if cg_c = '1' then
-				fl_c <= ula_out_c;
-			end if;
-		end if;
-	end process;
+	flag_zero: ffd PORT MAP(
+		D => ula_out_z,
+		Q => fl_z,
+		E => cg_nz,
+		R => rst,
+		ck => ck
+	);
 
-	flag_borrow : process(rst, ck)
-	begin
-		if rst = '1' then
-			fl_b <= '0';
-		elsif ck'event and ck = '1' then
-			if cg_b = '1' then
-				fl_b <= ula_out_b;
-			end if;
-		end if;
-	end process;
-	
-	flag_overflow : process(rst, ck)
-	begin
-		if rst = '1' then
-			fl_v <= '0';
-		elsif ck'event and ck = '1' then
-			if cg_v = '1' then
-				fl_v <= ula_out_v;
-			end if;
-		end if;
-	end process;
+	flag_carry: ffd PORT MAP(
+		D => ula_out_c,
+		Q => fl_c,
+		E => cg_c,
+		R => rst,
+		ck => ck
+	);
+
+	flag_borrow : ffd PORT MAP(
+		D => ula_out_b,
+		Q => fl_b,
+		E => cg_b,
+		R => rst,
+		ck => ck
+	);
+
+	flag_overflow : ffd PORT MAP(
+		D => ula_out_v,
+		Q => fl_v,
+		E => cg_v,
+		R => rst,
+		ck => ck
+	);
 
 	ac_out <= ra;
 	pc_out <= pc;
