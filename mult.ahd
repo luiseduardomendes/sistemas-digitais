@@ -1,0 +1,31 @@
+
+    LDA H84
+    STA H82
+    
+    LDA H81
+    STA H83
+
+loop:
+    JZ  end
+
+    SUB H85
+    STA H83
+
+    LDA H82
+    ADD H80
+    STA H82
+
+    LDA H83
+    JMP loop
+
+end:
+    HLT
+
+org H80
+    7
+    5
+    0
+    0
+    0
+    1
+    

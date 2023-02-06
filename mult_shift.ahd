@@ -1,0 +1,104 @@
+    LDA ZERO
+    STA S_1
+    STA S_2
+    STA COUNT
+
+    LDA Y
+    STA Y_
+
+LOOP:
+    LDA Y_
+    JZ END
+
+    SHR
+    STA Y_
+    JC SUM
+
+    LDA COUNT
+    ADD ONE
+    STA COUNT
+    JMP LOOP
+
+SUM:
+    LDA COUNT
+    STA COUNT2
+
+    LDA X
+    STA TEMP_1
+
+SHIFTING:
+
+    LDA TEMP_1
+    SHL 
+    STA TEMP_1
+    
+    LDA TEMP_2
+    ROR
+    STA TEMP_2
+
+    LDA COUNT2 
+    JZ END_SHIFTING
+    SUB ONE
+    STA COUNT2
+
+    
+    JMP SHIFTING
+
+END_SHIFTING:
+
+    LDA TEMP_1
+    ADD S_1
+    STA S_1
+    JC W_CARRY
+    JMP WO_CARRY
+
+W_CARRY:
+
+    LDA TEMP_2
+    ADD ONE
+    ADD S_2
+    STA S_2
+    JMP END_SUM
+
+WO_CARRY:
+
+    LDA TEMP_2
+    ADD S_2
+    STA S_2
+
+END_SUM:
+
+    LDA COUNT
+    ADD ONE
+    STA COUNT
+    JMP LOOP
+
+END:
+    LDA S_2
+    SHR 
+    STA S_2
+
+    LDA S_1
+    ROR
+    STA S_1
+
+    HLT
+
+ORG H80
+
+    X: db 0
+    Y: db 0
+    
+    S_1: db 0
+    S_2: db 0
+
+    Y_: db 0
+    TEMP_1: db 0
+    TEMP_2: db 0
+    COUNT: db 0
+    COUNT2: db 0
+
+
+    ZERO: db 0
+    ONE: db 1
+    EIGHT: db 8

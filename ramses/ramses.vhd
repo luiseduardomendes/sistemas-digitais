@@ -62,6 +62,7 @@ signal ula_out_z : STD_LOGIC;
 signal rdm_in : std_logic_vector(7 downto 0);
 signal rma_in : std_logic_vector(7 downto 0);
 signal sel_pc : std_logic_vector(1 downto 0); 
+signal EN_RDM : STD_LOGIC;
 
 signal mem_out : STD_LOGIC_VECTOR (7 downto 0);
 signal mem_in :  STD_LOGIC_VECTOR (7 downto 0);
@@ -181,10 +182,11 @@ begin
 		end if;
 	end process;
 
+	en_rdm <= cg_rdm or cg_read;
 	mem_data_reg : register_8_bits PORT MAP(
 		D => rdm_in,
 		Q => rdm,
-		E => cg_rdm or cg_read,
+		E => en_rdm,
 		R => rst,
 		ck => ck
 	);

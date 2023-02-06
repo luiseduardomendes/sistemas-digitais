@@ -1,4 +1,5 @@
 # Output products list for <mem>
+_xmsgs/pn_parser.xmsgs
 mem/blk_mem_gen_v7_3_readme.txt
 mem/doc/blk_mem_gen_v7_3_vinfo.html
 mem/doc/pg058-blk-mem-gen.pdf
@@ -45,6 +46,7 @@ mem/simulation/timing/wave_mti.do
 mem/simulation/timing/wave_ncsim.sv
 mem.asy
 mem.gise
+mem.mif
 mem.ngc
 mem.sym
 mem.vhd
