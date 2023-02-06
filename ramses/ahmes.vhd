@@ -139,6 +139,11 @@ begin
 		ck => CLK,
 		rst => RST
 	);
+	n <= fl_n;
+	z <= fl_z;
+	c <= fl_c;
+	b <= fl_b;
+	v <= fl_v;
 
 end Behavioral;
 

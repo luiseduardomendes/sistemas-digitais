@@ -43,6 +43,8 @@ begin
             state <= t0;
         elsif ck'event and ck='1' then 
             state <= next_state;
+		else
+			state <= state;
         end if;
 	end process;
 

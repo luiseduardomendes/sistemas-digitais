@@ -47,6 +47,8 @@ begin
 		elsif ck'event and ck = '1' then
 			if E = '1' then
 				REG <= D;
+			else
+				REG <= REG;
 			end if;
 		end if;
 	end process;
