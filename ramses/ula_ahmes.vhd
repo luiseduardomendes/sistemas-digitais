@@ -21,9 +21,14 @@ end ula_ahmes;
 architecture Behavioral of ula_ahmes is
 signal ula_out_temp : std_logic_vector(7 DOWNTO 0);
 begin
-    process(ula_inst, ula_in_x, ula_in_y, ula_out_temp)
+    process(ula_inst, ula_in_x, ula_in_y, ula_in_c, ula_out_temp)
 		variable ula_temp : std_logic_vector(8 DOWNTO 0);
 	begin
+	
+		ula_out_c <= '0';
+		ula_out_b <= '0';
+		ula_out_v <= '0';
+	
 		case ula_inst(7 downto 4) is
             when "0000" => -- NOP 
                 ula_out_temp <= ula_in_x;

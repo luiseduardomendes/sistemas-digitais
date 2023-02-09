@@ -32,6 +32,7 @@ end ramses_cp;
 architecture Behavioral of ramses_cp is
 type t_state is (t0, t1, t2, t3, t4, t5, t6, t7);
 signal state, next_state : t_state;
+
 signal operat, jmp_true, jmp_false, shifts : std_logic;
 signal op_nop, op_sta, op_lda, op_add, op_or, op_and, op_not, op_sub, op_jmp, op_shl, op_shr, op_rol, op_ror, op_hlt : std_logic;
 signal op_jn, op_jp, op_jv, op_jnv, op_jz, op_jnz, op_jc, op_jnc, op_jb, op_jnb : std_logic;
@@ -254,6 +255,8 @@ begin
                     end if;
                 end if;
                 next_state <= t0;
+			when others =>
+				next_state <= t0;
         end case;
     end process ; -- identifier
 end Behavioral;

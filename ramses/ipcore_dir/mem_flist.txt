@@ -46,7 +46,6 @@ mem/simulation/timing/wave_mti.do
 mem/simulation/timing/wave_ncsim.sv
 mem.asy
 mem.gise
-mem.mif
 mem.ngc
 mem.sym
 mem.vhd

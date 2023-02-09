@@ -132,6 +132,7 @@ begin
 		dina => mem_in,
 		douta => mem_out
 	);
+	
 	ULA : ULA_AHMES port MAP(
 		ula_in_x => ula_in_x,
 		ula_in_y => ula_in_y,
@@ -170,12 +171,11 @@ begin
 	);
 
 
-	sel_rdm_in : process(cg_read, cg_rdm)
+	sel_rdm_in : process(cg_read, cg_rdm, ra, mem_out)
 	begin
 		if cg_rdm = '1' then
 			rdm_in <= RA;
-		end if;
-		if cg_read = '1' then 
+		elsif cg_read = '1' then 
 			rdm_in <= mem_out;
 		else
 			rdm_in <= (others => '0');
@@ -191,7 +191,7 @@ begin
 		ck => ck
 	);
 	
-	sel_rma_in : process(sel_rem)
+	sel_rma_in : process(sel_rem, pc, rdm)
   	begin
 		if sel_rem = '1' then
 			RMA_in <= PC;
