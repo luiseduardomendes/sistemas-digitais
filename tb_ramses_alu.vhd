@@ -38,7 +38,7 @@ ARCHITECTURE behavior OF tb_ramses_alu IS
    signal v_flag : std_logic;
    signal n_flag : std_logic;
    signal z_flag : std_logic;
-   -- No clocks detected in port list. Replace ck below with 
+   -- No clocks detected in port list. Replace clk below with 
    -- appropriate port name 
  
    constant ck_period : time := 10 ns;

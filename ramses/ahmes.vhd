@@ -6,20 +6,25 @@ entity ahmes is
     Port ( 
 		   RST: in   STD_LOGIC;
 		   CLK: in   STD_LOGIC;
+		   ST : out  STD_LOGIC_VECTOR (3 downto 0);
+		   AMR : out  STD_LOGIC_VECTOR (7 downto 0);
+		   DMR : out  STD_LOGIC_VECTOR (7 downto 0);
+		   IR : out  STD_LOGIC_VECTOR (7 downto 0);
 		   AC : out  STD_LOGIC_VECTOR (7 downto 0);
            PC : out  STD_LOGIC_VECTOR (7 downto 0);
            N : out  STD_LOGIC;
            Z : out  STD_LOGIC;
            C : out  STD_LOGIC;
            B : out  STD_LOGIC;
-           V : out  STD_LOGIC);
-end ahmes;
+           V : out  STD_LOGIC;
+		sel_rma : OUT std_logic); 
+end ahmes; 
 
 architecture Behavioral of ahmes is
 COMPONENT ramses_cp
 	PORT(
 		rst : IN std_logic;
-		ck : IN std_logic;
+		clk : IN std_logic;
 		fl_n : IN std_logic;
 		fl_z : IN std_logic;
 		fl_c : IN std_logic;
@@ -38,7 +43,8 @@ COMPONENT ramses_cp
 		cg_read : OUT std_logic;
 		cg_write : OUT std_logic;
 		sel_REM : OUT std_logic;
-		inc_PC : OUT std_logic
+		inc_PC : OUT std_logic;
+		cur_state : out STD_LOGIC_VECTOR(3 downto 0)
 		);
 		
 	END COMPONENT;
@@ -57,15 +63,18 @@ COMPONENT ramses_cp
 		cg_v : IN std_logic;
 		cg_read : IN std_logic;
 		cg_write : IN std_logic;
-		ck : IN std_logic;
+		clk : IN std_logic;
 		rst : IN std_logic;          
 		ac_out : OUT std_logic_vector(7 downto 0);
 		pc_out : OUT std_logic_vector(7 downto 0);
+		instr_out : OUT std_logic_vector(7 downto 0);
 		fl_n_out : OUT std_logic;
 		fl_z_out : OUT std_logic;
 		fl_c_out : OUT std_logic;
 		fl_b_out : OUT std_logic;
-		fl_v_out : OUT std_logic
+		fl_v_out : OUT std_logic;
+		rma_out : OUT std_logic_vector(7 downto 0);
+		rmd_out : OUT std_logic_vector(7 downto 0)
 		);
 	END COMPONENT;
 
@@ -89,17 +98,53 @@ COMPONENT ramses_cp
 	signal cg_write : std_logic;
 	signal sel_REM : std_logic;
 	signal inc_PC : std_logic; 
+	signal cur_state : std_logic_vector(3 downto 0);
+	
+	signal rma : std_logic_vector(7 downto 0);
+	signal rmd : std_logic_vector(7 downto 0);
 	
 begin
-	Inst_ramses_cp: ramses_cp PORT MAP(
+	Inst_ahmes_po: ahmes_po PORT MAP(
+	-- inputs
+		ac_out => AC,
+		pc_out => PC,
+		instr_out => instr,
+		sel_rem => sel_REM,
+		inc_pc => inc_pc,
+		cg_RA => cg_AC,
+		cg_ri => cg_ri,
+		cg_pc => cg_pc,
+		cg_rem => cg_rem,		
+		cg_rdm => cg_rdm,
+		cg_nz => cg_nz,
+		cg_c => cg_c,
+		cg_b => cg_b,
+		cg_v => cg_v,
+		cg_read => cg_read,
+		cg_write => cg_write,
+	-- outputs
+		fl_n_out => fl_n,
+		fl_z_out => fl_z,
+		fl_c_out => fl_c,
+		fl_b_out => fl_b,
+		fl_v_out => fl_v,
+		clk => CLK,
 		rst => RST,
-		ck => CLK,
+		
+		rma_out => rma,
+		rmd_out => rmd
+	);
+	Inst_ramses_cp: ramses_cp PORT MAP(
+	-- inputs
+		rst => RST,
+		clk => CLK,
 		fl_n => fl_n,
 		fl_z => fl_z,
 		fl_c => fl_c,
 		fl_b => fl_b,
 		fl_v => fl_v,
 		instr => instr,
+	-- outputs
 		cg_AC => cg_AC,
 		cg_RI => cg_RI,
 		cg_PC => cg_PC,
@@ -112,33 +157,14 @@ begin
 		cg_read => cg_read,
 		cg_write => cg_write,
 		sel_REM => sel_REM,
-		inc_PC => inc_PC
+		inc_PC => inc_PC,
+		cur_state => cur_state
 	);
-	
-	Inst_ahmes_po: ahmes_po PORT MAP(
-		ac_out => AC,
-		pc_out => PC,
-		sel_rem => sel_REM,
-		inc_pc => inc_pc,
-		cg_RA => cg_AC,
-		cg_ri => cg_ri,
-		cg_pc => cg_pc,
-		cg_rem => cg_rem,
-		cg_rdm => cg_rdm,
-		cg_nz => cg_nz,
-		cg_c => cg_c,
-		cg_b => cg_b,
-		cg_v => cg_v,
-		cg_read => cg_read,
-		cg_write => cg_write,
-		fl_n_out => fl_n,
-		fl_z_out => fl_z,
-		fl_c_out => fl_c,
-		fl_b_out => fl_b,
-		fl_v_out => fl_v,
-		ck => CLK,
-		rst => RST
-	);
+	sel_rma <= sel_rem;
+	amr <= rma;
+	dmr <= rmd;
+	st <= cur_state;
+	ir <= instr;
 	n <= fl_n;
 	z <= fl_z;
 	c <= fl_c;

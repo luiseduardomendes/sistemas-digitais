@@ -33,7 +33,7 @@ ARCHITECTURE behavior OF tb_ramses_po IS
          c_out : OUT  std_logic;
          b_out : OUT  std_logic;
          v_out : OUT  std_logic;
-         ck : IN  std_logic;
+         clk : IN  std_logic;
          rst : IN  std_logic
         );
     END COMPONENT;
@@ -54,7 +54,7 @@ ARCHITECTURE behavior OF tb_ramses_po IS
    signal cg_v : std_logic := '0';
    signal cg_read : std_logic := '0';
    signal cg_write : std_logic := '0';
-   signal ck : std_logic := '0';
+   signal clk : std_logic := '0';
    signal rst : std_logic := '0';
 
  	--Outputs
@@ -67,7 +67,7 @@ ARCHITECTURE behavior OF tb_ramses_po IS
    signal c_out : std_logic;
    signal b_out : std_logic;
    signal v_out : std_logic;
-   -- No clocks detected in port list. Replace ck below with 
+   -- No clocks detected in port list. Replace clk below with 
    -- appropriate port name 
  
    constant ck_period : time := 10 ns;
@@ -98,16 +98,16 @@ BEGIN
           c_out => c_out,
           b_out => b_out,
           v_out => v_out,
-          ck => ck,
+          clk => clk,
           rst => rst
         );
 
    -- Clock process definitions
    ck_process :process
    begin
-		ck <= '0';
+		clk <= '0';
 		wait for ck_period/2;
-		ck <= '1';
+		clk <= '1';
 		wait for ck_period/2;
    end process;
  

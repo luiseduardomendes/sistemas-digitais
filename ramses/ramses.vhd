@@ -6,6 +6,9 @@ entity ahmes_po is
     Port ( 
 		ac_out: out  STD_LOGIC_VECTOR (7 downto 0);
 		pc_out: out  STD_LOGIC_VECTOR (7 downto 0);
+		rma_out: out  STD_LOGIC_VECTOR (7 downto 0);
+		rmd_out: out  STD_LOGIC_VECTOR (7 downto 0);
+		instr_out: out  STD_LOGIC_VECTOR (7 downto 0);
 		
 		sel_rem : in  STD_LOGIC;
 		inc_pc : in  STD_LOGIC;
@@ -13,8 +16,8 @@ entity ahmes_po is
 		cg_RA : in  STD_LOGIC;
 		cg_ri : in  STD_LOGIC;
 		cg_pc : in  STD_LOGIC;
-		cg_rem : in  STD_LOGIC;
 		cg_rdm : in  STD_LOGIC;
+		cg_rem : in  STD_LOGIC;
 		cg_nz : in  STD_LOGIC;
 		cg_c : in  STD_LOGIC;
 		cg_b : in  STD_LOGIC;
@@ -28,7 +31,7 @@ entity ahmes_po is
 		fl_b_out : out std_logic;
 		fl_v_out : out std_logic;
 
-		ck : in STD_LOGIC;
+		clk : in STD_LOGIC;
 		rst : in STD_LOGIC
 	);
 end ahmes_po;
@@ -58,11 +61,11 @@ signal ula_out_v : STD_LOGIC;
 signal ula_out_n : STD_LOGIC;
 signal ula_out_z : STD_LOGIC;
 
- -- other wires
+-- other wires
 signal rdm_in : std_logic_vector(7 downto 0);
 signal rma_in : std_logic_vector(7 downto 0);
 signal sel_pc : std_logic_vector(1 downto 0); 
-signal EN_RDM : STD_LOGIC;
+signal en_rdm : STD_LOGIC;
 
 signal mem_out : STD_LOGIC_VECTOR (7 downto 0);
 signal mem_in :  STD_LOGIC_VECTOR (7 downto 0);
@@ -84,7 +87,7 @@ PORT(
 	D : IN std_logic_vector(7 downto 0);
 	R : IN std_logic;
 	sel : IN std_logic_vector(1 downto 0);
-	ck : IN std_logic;          
+	clk : IN std_logic;          
 	Q : OUT std_logic_vector(7 downto 0)
 	);
 END COMPONENT;
@@ -93,7 +96,7 @@ PORT(
 	D : IN std_logic_vector(7 downto 0);
 	E : IN std_logic;
 	R : IN std_logic;
-	ck : IN std_logic;          
+	clk : IN std_logic;          
 	Q : OUT std_logic_vector(7 downto 0)
 	);
 END COMPONENT;
@@ -102,7 +105,7 @@ PORT(
 	D : IN std_logic;
 	E : IN std_logic;
 	R : IN std_logic;
-	ck : IN std_logic;          
+	clk : IN std_logic;          
 	Q : OUT std_logic
 	);
 END COMPONENT;
@@ -125,12 +128,19 @@ END COMPONENT;
 
 begin
 	mem_sel(0) <= cg_write;
+	
+	ula_in_x <= RA;
+	ula_in_y <= RDM;
+
+	mem_end <= RMA;
+	mem_in <= rdm;
+	
 	ram : mem PORT MAP (
-		clka => ck,
-		wea => mem_sel,
-		addra => mem_end,
-		dina => mem_in,
-		douta => mem_out
+		clka 	=> clk,
+		wea 	=> mem_sel,
+		addra 	=> mem_end,
+		dina 	=> mem_in,
+		douta 	=> mem_out
 	);
 	
 	ULA : ULA_AHMES port MAP(
@@ -146,20 +156,13 @@ begin
 		ula_out_n => ula_out_n,
 		ula_out_z => ula_out_z
 	);
-
-	ula_in_x <= RA;
-	ula_in_y <= RDM;
-
-	mem_end <= RMA;
-	mem_in <= rdm;
-
 	
 	accumulator : register_8_bits PORT MAP(
 		D => ula_out,
 		Q => RA,
 		E => cg_ra,
 		R => rst,
-		ck => ck
+		clk => clk
 	);
 	
 	instr_register : register_8_bits PORT MAP(
@@ -167,20 +170,17 @@ begin
 		Q => RI,
 		E => cg_ri,
 		R => rst,
-		ck => ck
+		clk => clk
 	);
-
 
 	sel_rdm_in : process(cg_read, cg_rdm, ra, mem_out)
 	begin
 		if cg_rdm = '1' then
 			rdm_in <= RA;
-		elsif cg_read = '1' then 
-			rdm_in <= mem_out;
 		else
-			rdm_in <= (others => '0');
+			rdm_in <= mem_out;
 		end if;
-	end process;
+	end process; 
 
 	en_rdm <= cg_rdm or cg_read;
 	mem_data_reg : register_8_bits PORT MAP(
@@ -188,12 +188,12 @@ begin
 		Q => rdm,
 		E => en_rdm,
 		R => rst,
-		ck => ck
+		clk => clk
 	);
 	
 	sel_rma_in : process(sel_rem, pc, rdm)
   	begin
-		if sel_rem = '1' then
+		if sel_rem = '0' then
 			RMA_in <= PC;
 		else
 			RMA_in <= RDM;
@@ -205,7 +205,7 @@ begin
 		Q => RMA,
 		E => cg_rem,
 		R => rst,
-		ck => ck
+		clk => clk
 	);
 
 	set_sel_pc : process(inc_pc, cg_pc)
@@ -224,7 +224,7 @@ begin
 		Q => PC,
 		R => Rst,
 		sel => sel_pc,
-		ck => ck
+		clk => clk
 	);
 			
 	flag_neg: ffd PORT MAP(
@@ -232,7 +232,7 @@ begin
 		Q => fl_n,
 		E => cg_nz,
 		R => rst,
-		ck => ck
+		clk => clk
 	);
 
 	flag_zero: ffd PORT MAP(
@@ -240,7 +240,7 @@ begin
 		Q => fl_z,
 		E => cg_nz,
 		R => rst,
-		ck => ck
+		clk => clk
 	);
 
 	flag_carry: ffd PORT MAP(
@@ -248,7 +248,7 @@ begin
 		Q => fl_c,
 		E => cg_c,
 		R => rst,
-		ck => ck
+		clk => clk
 	);
 
 	flag_borrow : ffd PORT MAP(
@@ -256,7 +256,7 @@ begin
 		Q => fl_b,
 		E => cg_b,
 		R => rst,
-		ck => ck
+		clk => clk
 	);
 
 	flag_overflow : ffd PORT MAP(
@@ -264,11 +264,14 @@ begin
 		Q => fl_v,
 		E => cg_v,
 		R => rst,
-		ck => ck
+		clk => clk
 	);
 
 	ac_out <= ra;
 	pc_out <= pc;
+	instr_out <= RI;
+	rma_out <= rma;
+	rmd_out <= rdm;
 
 	fl_z_out <= fl_z;
 	fl_n_out <= fl_n;

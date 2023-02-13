@@ -7,17 +7,17 @@ entity counter_8_bits is
            Q : out  STD_LOGIC_VECTOR (7 downto 0);
            R : in  STD_LOGIC;
            sel : in  STD_LOGIC_VECTOR (1 downto 0);
-           ck : in  STD_LOGIC);
+           clk : in  STD_LOGIC);
 end counter_8_bits;
 
 architecture Behavioral of counter_8_bits is
 signal reg : std_logic_vector(7 downto 0);
 begin
-	process(r, ck)
+	process(r, clk)
   	begin
 		if R = '1' then
 			reg <= (others => '0');
-		elsif ck'event and ck = '1' then
+		elsif clk'event and clk = '1' then
 			case sel is
 				when "00" => 
 					REG <= REG;

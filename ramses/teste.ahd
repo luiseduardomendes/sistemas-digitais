@@ -1,0 +1,26 @@
+org 1
+	NOP	
+	LDA h80
+	STA h81
+	ADD h81
+	OR  h80
+	AND h80
+	NOT
+	SUB h81
+	JMP h01
+	SHR 
+	SHL
+	ROR
+	ROL
+label1:
+	NOT
+	JN  label1
+label2:
+	NOT
+	JP  label2
+	HLT
+	
+org h80
+	db 10
+	db 05
+	
