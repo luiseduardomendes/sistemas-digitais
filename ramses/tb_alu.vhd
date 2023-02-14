@@ -42,19 +42,19 @@ ARCHITECTURE behavior OF tb_alu IS
    -- ULA_Operations
 	type ndarray is array (0 to 12) of std_logic_vector (7 downto 0);
 	constant operations : ndarray := (
-      "00000000", 
-      "00010000", 
-      "00100000", 
-      "00110000", 
-      "01000000", 
-      "01010000", 
-      "01100000", 
-      "01110000", 
-      "10000000", 
-      "11100000", 
-      "11100001", 
-      "11100010", 
-      "11100011"
+      "00000000", -- 00. nop
+      "00010000", -- 01. sta
+      "00100000", -- 02. lda
+      "00110000", -- 03. add
+      "01000000", -- 04. or
+      "01010000", -- 05. and
+      "01100000", -- 06. not
+      "01110000", -- 07. sub
+      "10000000", -- 08. jmp
+      "11100000", -- 09. shr
+      "11100001", -- 10. shl
+      "11100010", -- 11. ror
+      "11100011"  -- 12. rol
    );
  
    constant clk_period : time := 10 ns;
@@ -80,14 +80,57 @@ BEGIN
    begin		
       -- hold reset state for 100 ns.
       wait for 100 ns;	
+	  ula_inst <= operations(3);
+	  
       ula_in_x <= "00101110";
-	   ula_in_y <= "10000111";
-
-		for i in operations'range loop
-		   ula_inst <= operations(i);
-         wait for clk_period;
-      end loop;
-
+ula_in_y <= "10000111";
+wait for 25 ns;
+ula_in_x <= "11111001";
+ula_in_y <= "11111010";
+wait for 25 ns;
+ula_in_x <= "11111001";
+ula_in_y <= "10001000";
+wait for 25 ns;
+ula_in_x <= "11100001";
+ula_in_y <= "01100111";
+wait for 25 ns;
+ula_in_x <= "10100111";
+ula_in_y <= "11011000";
+wait for 25 ns;
+ula_in_x <= "10101001";
+ula_in_y <= "11111100";
+wait for 25 ns;
+ula_in_x <= "01101010";
+ula_in_y <= "11010011";
+wait for 25 ns;
+ula_in_x <= "10001001";
+ula_in_y <= "11101111";
+wait for 25 ns;
+ula_in_x <= "10110000";
+ula_in_y <= "10100110";
+wait for 25 ns;
+ula_in_x <= "10100011";
+ula_in_y <= "11100100";
+wait for 25 ns;
+ula_in_x <= "00000111";
+ula_in_y <= "10111100";
+wait for 25 ns;
+ula_in_x <= "00111101";
+ula_in_y <= "11110001";
+wait for 25 ns;
+ula_in_x <= "10000011";
+ula_in_y <= "10001110";
+wait for 25 ns;
+ula_in_x <= "00110101";
+ula_in_y <= "00110111";
+wait for 25 ns;
+ula_in_x <= "01010001";
+ula_in_y <= "11010001";
+wait for 25 ns;
+ula_in_x <= "11111011";
+ula_in_y <= "10001000";
+wait for 25 ns;
+	  
       wait;
    end process;
 

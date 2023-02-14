@@ -216,10 +216,10 @@ begin
                 if op_sta = '0' then
                     cg_AC <= '1';
                     cg_NZ <= '1';
-                    if op_add = '1' then
+                    if op_add = '1' then 
                         cg_C <= '1';
                         cg_V <= '1';
-                    else
+                    elsif op_sub = '1' then
                         cg_B <= '1';
                         cg_V <= '1';
                     end if;

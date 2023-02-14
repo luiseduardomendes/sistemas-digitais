@@ -59,7 +59,7 @@ begin
 				ula_temp <= std_logic_vector(unsigned('0' & ula_in_x) + not(unsigned('0' & ula_in_y)) + 1); 
                 ula_out_temp <= ula_temp(7 downto 0);
 
-				ula_out_b_temp <= not(ula_temp(8));
+				ula_out_b_temp <= (ula_temp(8));
 				ula_out_v_temp <= (ula_in_x(7) xor ula_in_y(7)) and (ula_out_temp(7) xnor ula_in_y(7));
             when "1101" => -- NEG
                 ula_out_temp <= std_logic_vector( - signed(ula_in_x));
